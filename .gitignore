@@ -1,0 +1,58 @@
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+.env/
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── TensorFlow / Keras ────────────────────────────────────────────────────────
+# Model files are too large for GitHub (35–73 MB each).
+# Re-generate them by running: python3 training/train.py && python3 finetune_cnn.py
+saved_models/
+
+# ── Data — never commit raw datasets ─────────────────────────────────────────
+data/raw/
+data/raf/
+data/extra/
+data/processed/
+raf/
+
+# ── Logs & outputs ────────────────────────────────────────────────────────────
+*.log
+nohup.out
+/tmp/
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Debug / scratch scripts ───────────────────────────────────────────────────
+debug_*.py
+
+# ── Streamlit cache ───────────────────────────────────────────────────────────
+.streamlit/
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+*.tmp
+*.bak
