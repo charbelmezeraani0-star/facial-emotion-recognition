@@ -15,7 +15,7 @@
 
 ## Overview
 
-A full deep-learning pipeline for **real-time facial emotion recognition**, built as a university AI/Computer Vision project. The system trains a custom multi-scale CNN with Squeeze-and-Excitation attention from scratch, fine-tunes MobileNetV2 via transfer learning, and combines them into a 4-model soft-voting ensemble — beating a DeepFace pretrained baseline by **+17.65%** accuracy.
+A full deep-learning pipeline for **real-time facial emotion recognition**, built as a university AI/Computer Vision project. The system trains a custom multi-scale CNN with Squeeze-and-Excitation attention from scratch, fine-tunes MobileNetV2 and EfficientNetB2 via transfer learning, and combines models with SWA + Test-Time Augmentation — beating a DeepFace pretrained baseline by **+27.22%** accuracy.
 
 **Key results:**
 
@@ -25,7 +25,8 @@ A full deep-learning pipeline for **real-time facial emotion recognition**, buil
 | MobileNetV2 SWA + TTA | 68.19% |
 | Custom CNN v1 Best + TTA | 69.42% |
 | Custom CNN v2 Fine-tuned + TTA | 69.73% |
-| **4-Model Ensemble + TTA** | **70.45%** |
+| 4-Model Ensemble + TTA | 70.45% |
+| **EfficientNetB2 Fine-tuned + TTA** | **80.02%** |
 
 ---
 
@@ -90,6 +91,19 @@ Input 48×48×1
 - **He initialisation** + **Batch Normalisation** on every conv layer
 - ~3.2M parameters · input: 48 × 48 × 1 (grayscale)
 
+### EfficientNetB2 — Transfer Learning
+
+Fine-tuned on RAF-DB at 96×96 RGB with a 4-phase training schedule:
+
+| Phase | Layers unfrozen | Epochs | LR | Best val |
+|---|---|---|---|---|
+| 1 — Head only | 0% | 15 | 1e-3 | 57.41% |
+| 2 — Top 40% | 40% | 20 | 2e-4 | 72.72% |
+| 3 — Full fine-tune | 100% | 10 | 5e-5 | 74.59% |
+| 4 — SWA | 100% | 8 | 1e-5 | 75.16% |
+
+With 8-pass TTA: **80.02% test accuracy** (+9.57% over the 4-model ensemble)
+
 ### Training Pipeline
 
 ```
@@ -144,7 +158,8 @@ cv-project/
 │   └── meeting_analyzer.py      Video mood analytics
 ├── logs/                        CSV training history files
 ├── saved_models/                Trained .keras model files
-├── finetune_cnn.py              Fine-tune from best checkpoint + SWA
+├── finetune_cnn.py              Fine-tune custom CNN from best checkpoint + SWA
+├── finetune_efficientnet.py     Fine-tune EfficientNetB2 on RAF-DB (4-phase, 96×96) → 80.02%
 ├── evaluate_final.py            Full benchmark: all models + TTA + ensemble + DeepFace
 ├── benchmark_deepface.py        Standalone DeepFace accuracy benchmark
 ├── requirements.txt
@@ -184,6 +199,9 @@ python3 training/train.py
 
 # Fine-tune custom CNN from best checkpoint (30 more epochs + SWA)
 python3 finetune_cnn.py
+
+# Fine-tune EfficientNetB2 on RAF-DB — 4-phase, 96×96, ~2h on RTX 4050
+python3 finetune_efficientnet.py
 ```
 
 Or use the one-shot script:
@@ -223,6 +241,10 @@ Running 8 random augmentation passes at inference time and averaging the softmax
 ### Why an ensemble?
 
 The 4 models (MobileNetV2 SWA, CNN v1 Best, CNN v2 Best, CNN v2 SWA) make partially independent errors due to different architectures and training trajectories. Soft-voting their TTA outputs yields **70.45%** — higher than any single model.
+
+### Why EfficientNetB2 outperforms the ensemble?
+
+EfficientNetB2 pretrained on ImageNet (6.9M parameters, compound-scaled depth/width/resolution) provides far richer feature representations than a 3.2M-parameter custom CNN trained from scratch on ~11k samples. ImageNet pretraining gives texture, edge, and shape detectors that transfer well to facial expression recognition. Fine-tuning with progressive layer unfreezing prevents catastrophic forgetting while adapting the backbone to emotion-specific features. The result: **80.02% with TTA** — beating the 4-model ensemble by **+9.57%**.
 
 ---
 

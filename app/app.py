@@ -37,6 +37,8 @@ AVAILABLE_MODELS = {
         'Custom CNN v2  (Fine-tuned best)': 'saved_models/custom_cnn_v2_best.keras',
         'Custom CNN v2  (SWA)':             'saved_models/custom_cnn_v2_swa.keras',
         'MobileNetV2    (SWA)':             'saved_models/mobilenetv2_swa.keras',
+        'EfficientNetB2 (Best + TTA)':      'saved_models/efficientnetb2_best.keras',
+        'EfficientNetB2 (SWA)':             'saved_models/efficientnetb2_swa.keras',
     }.items() if os.path.exists(path)
 }
 
@@ -48,6 +50,8 @@ BENCHMARK = {
     'Custom CNN v2\nBest + TTA':           69.73,
     'Custom CNN v2\nSWA + TTA':            69.54,
     'Ensemble\n(4 models + TTA)':          70.45,
+    'EfficientNetB2\nBest + TTA':          80.02,
+    'EfficientNetB2\nSWA + TTA':           79.99,
 }
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -142,8 +146,8 @@ with st.sidebar:
     st.markdown("**Best accuracy**")
     st.markdown(
         "<div class='metric-box'>"
-        "<div class='val'>70.45%</div>"
-        "<div class='lbl'>4-model ensemble + TTA</div>"
+        "<div class='val'>80.02%</div>"
+        "<div class='lbl'>EfficientNetB2 + TTA</div>"
         "</div>", unsafe_allow_html=True)
     st.markdown("**vs DeepFace pretrained**")
     st.markdown(
@@ -579,31 +583,34 @@ with tabs[2]:
     # ── Accuracy bar chart ────────────────────────────────────────────────────
     labels = list(BENCHMARK.keys())
     accs   = [v / 100 for v in BENCHMARK.values()]
-    bar_colors = ['#64748b', '#6366f1', '#6366f1', '#6366f1', '#6366f1', '#f59e0b']
+    bar_colors = ['#64748b', '#6366f1', '#6366f1', '#6366f1', '#6366f1',
+                  '#6366f1', '#10b981', '#10b981']
 
-    fig, ax = plt.subplots(figsize=(10, 4.5))
+    fig, ax = plt.subplots(figsize=(12, 5))
     fig.patch.set_facecolor('#0f172a')
     ax.set_facecolor('#1e293b')
 
     bars = ax.bar(labels, [v * 100 for v in accs], color=bar_colors,
                   edgecolor='none', width=0.55)
-    # Highlight best
-    bars[-1].set_color('#f59e0b')
     bars[0].set_color('#64748b')
+    bars[-2].set_color('#10b981')
+    bars[-1].set_color('#10b981')
 
     ax.axhline(52.80, color='#64748b', linestyle='--', linewidth=1,
                alpha=0.6, label='DeepFace baseline')
     ax.axhline(70.45, color='#f59e0b', linestyle='--', linewidth=1,
-               alpha=0.6, label='Our best ensemble')
+               alpha=0.6, label='Ensemble (prev. best)')
+    ax.axhline(80.02, color='#10b981', linestyle='--', linewidth=1,
+               alpha=0.6, label='EfficientNetB2 (new best)')
 
     for bar, v in zip(bars, accs):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.4,
                 f'{v*100:.2f}%', ha='center', va='bottom',
-                fontsize=9, color='#e2e8f0', fontweight='bold')
+                fontsize=8, color='#e2e8f0', fontweight='bold')
 
-    ax.set_ylim(40, 78)
+    ax.set_ylim(40, 88)
     ax.set_ylabel('Test Accuracy (%)', color='#94a3b8')
-    ax.tick_params(colors='#94a3b8', labelsize=8)
+    ax.tick_params(colors='#94a3b8', labelsize=7.5)
     ax.spines[:].set_visible(False)
     ax.set_facecolor('#1e293b')
     fig.patch.set_facecolor('#0f172a')
@@ -616,14 +623,14 @@ with tabs[2]:
     # ── Summary metrics ───────────────────────────────────────────────────────
     st.markdown("---")
     c1, c2, c3, c4 = st.columns(4)
-    c1.markdown("<div class='metric-box'><div class='val'>70.45%</div>"
-                "<div class='lbl'>Best ensemble accuracy</div></div>",
+    c1.markdown("<div class='metric-box'><div class='val'>80.02%</div>"
+                "<div class='lbl'>Best model accuracy (EfficientNetB2 + TTA)</div></div>",
                 unsafe_allow_html=True)
-    c2.markdown("<div class='metric-box'><div class='val'>+17.65%</div>"
+    c2.markdown("<div class='metric-box'><div class='val'>+27.22%</div>"
                 "<div class='lbl'>vs DeepFace pretrained</div></div>",
                 unsafe_allow_html=True)
-    c3.markdown("<div class='metric-box'><div class='val'>4 models</div>"
-                "<div class='lbl'>in best ensemble</div></div>",
+    c3.markdown("<div class='metric-box'><div class='val'>+9.57%</div>"
+                "<div class='lbl'>vs 4-model ensemble</div></div>",
                 unsafe_allow_html=True)
     c4.markdown("<div class='metric-box'><div class='val'>8 passes</div>"
                 "<div class='lbl'>TTA augmentation</div></div>",
@@ -640,7 +647,7 @@ with tabs[2]:
     df_bench = df_bench.set_index('Model')
     st.dataframe(
         df_bench.style
-            .background_gradient(subset=['Accuracy (%)'], cmap='YlGn', vmin=45, vmax=75)
+            .background_gradient(subset=['Accuracy (%)'], cmap='YlGn', vmin=45, vmax=82)
             .format({'Accuracy (%)': '{:.2f}%', 'Gap vs DeepFace': '{:+.2f}%'}),
         use_container_width=True)
 
@@ -653,11 +660,11 @@ lower accuracy. Our models were trained directly on the same distribution, givin
 significant advantage — but it's still a meaningful baseline since DeepFace requires
 **zero training effort**.
 
-| | DeepFace | Our Ensemble |
+| | DeepFace | Our Best (EfficientNetB2) |
 |--|--|--|
-| Training required | ❌ None | ✅ 100+ epochs |
-| Dataset | FER2013 | RAF-DB + FER2013 + extra |
-| Test accuracy | 52.80% | **70.45%** |
+| Training required | ❌ None | ✅ 4-phase fine-tuning |
+| Dataset | FER2013 | RAF-DB (96×96) |
+| Test accuracy | 52.80% | **80.02%** |
 | TTA | — | 8 passes |
 | Real-time capable | ✅ | ✅ |
 """)
@@ -756,6 +763,32 @@ with tabs[3]:
             plt.close(fig)
 
     st.markdown("---")
+    st.markdown("#### EfficientNetB2 — 4-phase fine-tuning (best model, 80.02%)")
+    eff_head = load_csv('logs/efficientnetb2_head_history.csv')
+    eff_mid  = load_csv('logs/efficientnetb2_mid_history.csv')
+    eff_best = load_csv('logs/efficientnetb2_best_history.csv')
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        if eff_head is not None:
+            st.markdown("**Phase 1 — Head only (lr=1e-3)**")
+            fig = plot_history(eff_head, 'EffNetB2 head', '#10b981', '#f59e0b')
+            st.pyplot(fig, use_container_width=True)
+            plt.close(fig)
+    with c2:
+        if eff_mid is not None:
+            st.markdown("**Phase 2 — Top 40% (lr=2e-4)**")
+            fig = plot_history(eff_mid, 'EffNetB2 mid', '#10b981', '#f59e0b')
+            st.pyplot(fig, use_container_width=True)
+            plt.close(fig)
+    with c3:
+        if eff_best is not None:
+            st.markdown("**Phase 3 — Full fine-tune (lr=5e-5)**")
+            fig = plot_history(eff_best, 'EffNetB2 full', '#10b981', '#f59e0b')
+            st.pyplot(fig, use_container_width=True)
+            plt.close(fig)
+
+    st.markdown("---")
     st.markdown("#### Key observations")
     st.markdown("""
 - **Augmentation bug** (discovered at epoch 0): `RandomBrightness` + `RandomContrast`
@@ -801,18 +834,22 @@ with tabs[4]:
 - **Squeeze-and-Excitation** (SE) attention blocks
 - **Residual** connections throughout
 - **Batch Normalisation** + He initialisation
-- ~3.2M parameters
-- Input: 48 × 48 × 1 (grayscale)
-- Output: softmax over 7 emotions
+- ~3.2M parameters · Input: 48 × 48 × 1 (grayscale)
+""")
+        st.markdown("#### Architecture — EfficientNetB2 (Best model)")
+        st.markdown("""
+- ImageNet-pretrained backbone (6.9M parameters)
+- 4-phase fine-tuning: head → top 40% → full → SWA
+- Input: 96 × 96 × 3 (RGB) · Mixed precision (float16)
+- **80.02% test accuracy** with 8-pass TTA
 """)
         st.markdown("#### Training techniques")
         st.markdown("""
-- CosineDecay LR schedule (1e-3 → ~0)
-- Adam optimizer + gradient clipping (clipnorm=1.0)
+- CosineDecay LR schedule / Adam + gradient clipping
 - No colour augmentation (incompatible with per-image standardisation)
 - Stochastic Weight Averaging (SWA)
 - Test-Time Augmentation (TTA, 8 passes)
-- 4-model soft-voting ensemble
+- 4-model soft-voting ensemble (custom CNNs)
 """)
 
     with col_b:
@@ -846,6 +883,9 @@ python3 training/train.py
 # Fine-tune from best checkpoint (+30 epochs + SWA)
 python3 finetune_cnn.py
 
+# Fine-tune EfficientNetB2 on RAF-DB (4-phase, 96×96) → 80.02% accuracy
+python3 finetune_efficientnet.py
+
 # Full evaluation: all models + TTA + ensemble + DeepFace
 python3 evaluate_final.py
 
@@ -866,7 +906,8 @@ streamlit run app/app.py
         'Model': [l.replace('\n', ' ') for l in BENCHMARK.keys()],
         'Accuracy': [f"{v:.2f}%" for v in BENCHMARK.values()],
         'Method': ['Zero-shot pretrained', 'TTA only', 'TTA only',
-                   'Fine-tune + TTA', 'SWA + TTA', '4-model soft-voting + TTA'],
+                   'Fine-tune + TTA', 'SWA + TTA', '4-model soft-voting + TTA',
+                   'EfficientNetB2 fine-tune + TTA', 'EfficientNetB2 SWA + TTA'],
     }
     st.dataframe(pd.DataFrame(res_data).set_index('Model'),
                  use_container_width=True)
