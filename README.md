@@ -88,6 +88,32 @@ python3 realtime/realtime_webcam.py --model saved_models/efficientnetb2_best.ker
 | `Q` | Quit |
 | `G` | Toggle Grad-CAM overlay |
 
+### CLI Tools
+
+```bash
+# Emotion detection on a single image (saves annotated output)
+python3 detection/detect_image.py --image path/to/photo.jpg
+python3 detection/detect_image.py --image photo.jpg --model saved_models/efficientnetb2_best.keras --detector mtcnn
+
+# Emotion detection on a video file (frame-by-frame)
+python3 detection/detect_video.py --video path/to/video.mp4
+python3 detection/detect_video.py --video meeting.mp4 --save   # saves annotated output video
+
+# Meeting mood analytics — full PDF report with emotion timeline and statistics
+python3 analysis/meeting_analyzer.py --video path/to/meeting.mp4
+python3 analysis/meeting_analyzer.py --video meeting.mp4 --model saved_models/efficientnetb2_best.keras
+```
+
+### Model Export (Edge / Mobile)
+
+```bash
+# Export to TFLite with INT8 quantization (4× smaller, runs on Android / Raspberry Pi)
+python3 -c "
+from evaluation.export import export_tflite
+export_tflite('saved_models/efficientnetb2_best.keras', quantize=True)
+"
+```
+
 ---
 
 ## Architecture
@@ -166,11 +192,12 @@ cv-project/
 ├── detection/
 │   ├── face_detector.py         Haar cascade + MTCNN face detection
 │   ├── face_tracker.py          Multi-face tracker with smoothing
-│   ├── detect_image.py          CLI: emotion detection on a single image
-│   └── detect_video.py          CLI: emotion detection on a video file
+│   ├── detect_image.py          CLI: single-image emotion annotation
+│   └── detect_video.py          CLI: frame-by-frame video annotation
 ├── evaluation/
-│   ├── gradcam.py               Grad-CAM computation and overlay
+│   ├── gradcam.py               Grad-CAM heatmap computation and overlay
 │   ├── evaluate.py              Per-model evaluation + confusion matrix
+│   ├── export.py                Export to TFLite (INT8) and ONNX for edge/mobile
 │   └── plots/                   Saved training curve PNGs
 ├── models/
 │   ├── custom_cnn.py            MultiScale SE-CNN architecture definition
@@ -181,7 +208,11 @@ cv-project/
 ├── realtime/
 │   └── realtime_webcam.py       Live webcam demo (Grad-CAM, timeline, compare mode)
 ├── analysis/
-│   └── meeting_analyzer.py      Video mood analytics
+│   └── meeting_analyzer.py      Meeting mood analytics — PDF report with emotion timeline
+├── notebooks/
+│   ├── 01_EDA.ipynb             Exploratory data analysis — class distribution, samples
+│   ├── 02_Training.ipynb        Training experiments and hyperparameter exploration
+│   └── 03_Results.ipynb         Results analysis, confusion matrices, error cases
 ├── logs/                        CSV training history files (all phases)
 ├── saved_models/                Trained .keras model files (git-ignored, ~35–73 MB each)
 ├── finetune_cnn.py              Fine-tune custom CNN from best checkpoint + SWA
