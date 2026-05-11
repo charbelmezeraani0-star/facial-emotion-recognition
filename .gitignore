@@ -56,3 +56,15 @@ debug_*.py
 # ── Misc ─────────────────────────────────────────────────────────────────────
 *.tmp
 *.bak
+
+# ── Deliverables & generation scripts (not part of runnable project) ─────────
+Emotion_Recognition_Presentation.pptx
+Emotion_Recognition_Report.docx
+REPORT.md
+generate_pptx.py
+generate_report.py
+efficientnetb2_best.zip
+
+# ── Generated plot outputs (re-created by evaluate_final.py / train.py) ──────
+evaluation/plots/*.png
+evaluation/plots/make_figure4_grid.py
