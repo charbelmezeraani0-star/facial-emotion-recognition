@@ -20,9 +20,9 @@ env/
 *.ipynb_checkpoints
 
 # ── TensorFlow / Keras ────────────────────────────────────────────────────────
-# Model files are too large for GitHub (35–73 MB each).
-# Re-generate them by running: python3 training/train.py && python3 finetune_cnn.py
-saved_models/
+# Model files are too large for GitHub — only the zipped best model is tracked.
+saved_models/*.keras
+saved_models/*.json
 
 # ── Data — never commit raw datasets ─────────────────────────────────────────
 data/raw/
@@ -63,7 +63,6 @@ Emotion_Recognition_Report.docx
 REPORT.md
 generate_pptx.py
 generate_report.py
-efficientnetb2_best.zip
 
 # ── Generated plot outputs (re-created by evaluate_final.py / train.py) ──────
 evaluation/plots/*.png
